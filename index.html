@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulated Annealing – Timetable Scheduling</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Simulated Annealing for <span>Timetable Scheduling</span></h1>
+  <p>Watch the algorithm find a conflict-free timetable in real time</p>
+</header>
+
+<div class="container">
+
+  <!-- ===== CONFIGURATION ===== -->
+  <div class="config-wrapper">
+    <button class="config-toggle" id="configToggle" onclick="toggleConfig()">
+      <span>⚙️ Configuration — Teachers, Subjects &amp; Rooms</span>
+      <span class="arrow">▼</span>
+    </button>
+    <div class="config-body" id="configBody">
+      <div class="config-columns">
+
+        <!-- Teachers -->
+        <div class="config-col">
+          <h3>Teachers</h3>
+          <ul class="config-list" id="teacherList"></ul>
+          <button class="btn-add" onclick="addTeacher()">+ Add Teacher</button>
+        </div>
+
+        <!-- Subjects -->
+        <div class="config-col">
+          <h3>Subjects</h3>
+          <ul class="config-list" id="subjectList"></ul>
+          <button class="btn-add" onclick="addSubject()">+ Add Subject</button>
+        </div>
+
+        <!-- Rooms -->
+        <div class="config-col">
+          <h3>Rooms</h3>
+          <ul class="config-list" id="roomList"></ul>
+          <button class="btn-add" onclick="addRoom()">+ Add Room</button>
+        </div>
+
+      </div>
+      <button class="btn-apply" onclick="applyConfig()">Apply Changes &amp; Reset</button>
+    </div>
+  </div>
+
+  <!-- ===== CONTROLS ===== -->
+  <div class="card">
+    <div class="controls">
+      <button class="btn btn-start" id="btnStart" onclick="toggleRun()">▶ Start</button>
+      <button class="btn btn-reset" onclick="resetSA()">↺ Reset</button>
+      <div class="slider-group">
+        <label>Speed</label>
+        <input type="range" id="speedSlider" min="1" max="100" value="50"
+               oninput="document.getElementById('speedVal').textContent=this.value">
+        <span class="slider-val" id="speedVal">50</span>
+      </div>
+      <div class="slider-group">
+        <label>Cooling</label>
+        <input type="range" id="coolingSlider" min="1" max="99" value="95"
+               oninput="document.getElementById('coolingVal').textContent=getCoolingRate().toFixed(3)">
+        <span class="slider-val" id="coolingVal">0.995</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STATS ===== -->
+  <div class="stats">
+    <div class="stat-card highlight"><div class="label">Temperature</div><div class="value" id="statTemp">100.000</div></div>
+    <div class="stat-card"><div class="label">Current Cost</div><div class="value" id="statCost">–</div></div>
+    <div class="stat-card"><div class="label">Best Cost</div><div class="value" id="statBest">–</div></div>
+    <div class="stat-card"><div class="label">Iteration</div><div class="value" id="statIter">0</div></div>
+    <div class="stat-card"><div class="label">Status</div><div class="value" id="statStatus">Ready</div></div>
+  </div>
+
+  <!-- ===== TIMETABLE ===== -->
+  <div class="card">
+    <h2>📅 Current Schedule</h2>
+    <div class="timetable-wrap">
+      <table class="timetable" id="timetable"></table>
+    </div>
+  </div>
+
+  <!-- ===== LOG ===== -->
+  <div class="card">
+    <h2>📝 Algorithm Log</h2>
+    <div id="log">Press Start to begin the simulation…
+</div>
+  </div>
+
+  <!-- ===== EXPLANATION ===== -->
+  <div class="card explanation">
+    <h2>📖 What is Simulated Annealing?</h2>
+
+    <p>
+      Simulated Annealing (SA) is an optimisation algorithm inspired by the process of
+      <strong>annealing in metallurgy</strong> — where you heat metal to a high temperature
+      and then slowly cool it down so it settles into a strong, low-energy crystal structure.
+    </p>
+
+    <div class="analogy">
+      <strong>Think of it this way:</strong> Imagine you're blindfolded on a hilly landscape
+      trying to find the lowest valley. You start by taking big random jumps (high temperature)
+      so you don't get stuck in a small dip. As you "cool down", your jumps get smaller and
+      you settle into the deepest valley you've found.
+    </div>
+
+    <h3>How does it work for timetable scheduling?</h3>
+    <ol>
+      <li><strong>Start</strong> — Generate a random timetable (each subject goes to a random day, time slot, and room).</li>
+      <li><strong>Cost function</strong> — Count "conflicts":
+        <ul>
+          <li>Two subjects in the <em>same room</em> at the <em>same time</em>.</li>
+          <li>Same teacher assigned to two different rooms at the <em>same time</em>.</li>
+        </ul>
+        The goal is to bring this cost to <strong>0</strong>.
+      </li>
+      <li><strong>Neighbour move</strong> — Pick a random subject and move it to a different random (day, slot, room).</li>
+      <li><strong>Accept or reject</strong> —
+        <ul>
+          <li>If the new schedule is <em>better</em> (fewer conflicts) → always accept.</li>
+          <li>If it's <em>worse</em> → accept with a probability that depends on temperature.
+              Higher temperature = more likely to accept bad moves (helps escape local minima).</li>
+        </ul>
+      </li>
+      <li><strong>Cool down</strong> — Multiply the temperature by the cooling rate (e.g. 0.995).
+          Over time, the algorithm becomes pickier.</li>
+      <li><strong>Stop</strong> — When temperature drops near 0 or we reach 0 conflicts.</li>
+    </ol>
+
+    <h3>The acceptance formula</h3>
+    <p>
+      When a neighbour is worse by <code>Δ = new_cost − old_cost</code>, we accept it with probability:
+    </p>
+    <p class="formula">P(accept) = e<sup>−Δ / T</sup></p>
+    <p>As <strong>T → 0</strong>, this probability also → 0, so bad moves stop being accepted.</p>
+
+    <h3>Why not brute force?</h3>
+    <p>
+      Timetable scheduling is an <strong>NP-hard</strong> problem. The number of possible
+      combinations grows explosively with more subjects, rooms, and time slots. Trying every
+      combination would take an impractical amount of time. SA finds a <em>good enough</em>
+      solution quickly.
+    </p>
+
+    <h3>Controls explained</h3>
+    <ul>
+      <li><strong>Speed</strong> — How fast the animation plays (display only, doesn't affect the algorithm).</li>
+      <li><strong>Cooling Rate</strong> — How quickly the temperature drops. Higher = slower cooling = more exploration.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>Simulated Annealing Timetable Scheduling — Academic Project</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
