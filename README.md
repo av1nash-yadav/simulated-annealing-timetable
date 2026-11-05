@@ -75,8 +75,6 @@ The cost counts two types of conflicts:
 
 - HTML5
 - CSS3
-- Vanilla JavaScript (no frameworks or libraries)
+- JavaScript (no frameworks or libraries)
 
-## License
 
-This project is for academic purposes. Feel free to use and modify.
