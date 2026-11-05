@@ -19,21 +19,9 @@ Built as an academic project to demonstrate how meta-heuristic optimisation work
 | **Stats dashboard** | Real-time display of temperature, current cost, best cost, and iteration count |
 | **Algorithm explanation** | Plain-language description of Simulated Annealing with analogies and the acceptance formula |
 
-## How to Run
+## Deploy Link
 
-1. Clone or download this repository.
-2. Open `index.html` in any modern web browser.
-
-No server, no build step, no dependencies — it's pure HTML + CSS + JavaScript.
-
-```bash
-# clone and open
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
-open index.html        # macOS
-xdg-open index.html    # Linux
-start index.html       # Windows
-```
+https://av1nash-yadav.github.io/simulated-annealing-timetable/
 
 ## How to Use
 
